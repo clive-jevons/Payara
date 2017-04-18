@@ -127,7 +127,9 @@ public class JdbcPoolMonitoringExtension implements ConnectionPoolMonitoringExte
                             poolInfo,
                             getProbeProviderUtil().getJdbcProbeProvider());
             jdbcPoolStatsProvider.setPoolRegistry(registry);
-            jdbcStatsProviders.add(jdbcPoolStatsProvider);
+            synchronized (jdbcPoolStatsProvider) {
+                jdbcStatsProviders.add(jdbcPoolStatsProvider);
+            }
         }
     }
 
@@ -139,16 +141,18 @@ public class JdbcPoolMonitoringExtension implements ConnectionPoolMonitoringExte
     @Override
     public void unregisterPool(PoolInfo poolInfo) {
         if(jdbcStatsProviders != null) {
-            Iterator i = jdbcStatsProviders.iterator();
-            while (i.hasNext()) {
-                JdbcConnPoolStatsProvider jdbcPoolStatsProvider = (JdbcConnPoolStatsProvider) i.next();
-                if (poolInfo.equals(jdbcPoolStatsProvider.getPoolInfo())) {
-                    //Get registry and unregister this pool from the registry
-                    PoolLifeCycleListenerRegistry poolRegistry = jdbcPoolStatsProvider.getPoolRegistry();
-                    poolRegistry.unRegisterPoolLifeCycleListener(poolInfo);
-                    StatsProviderManager.unregister(jdbcPoolStatsProvider);
+            synchronized (jdbcStatsProviders) {
+                Iterator i = jdbcStatsProviders.iterator();
+                while (i.hasNext()) {
+                    JdbcConnPoolStatsProvider jdbcPoolStatsProvider = (JdbcConnPoolStatsProvider) i.next();
+                    if (poolInfo.equals(jdbcPoolStatsProvider.getPoolInfo())) {
+                        //Get registry and unregister this pool from the registry
+                        PoolLifeCycleListenerRegistry poolRegistry = jdbcPoolStatsProvider.getPoolRegistry();
+                        poolRegistry.unRegisterPoolLifeCycleListener(poolInfo);
+                        StatsProviderManager.unregister(jdbcPoolStatsProvider);
 
-                    i.remove();
+                        i.remove();
+                    }
                 }
             }
         }
