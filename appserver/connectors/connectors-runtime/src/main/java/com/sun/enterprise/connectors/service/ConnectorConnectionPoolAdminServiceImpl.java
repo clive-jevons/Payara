@@ -531,7 +531,7 @@ public class ConnectorConnectionPoolAdminServiceImpl extends ConnectorService {
      * @return an unPooled connection
      * @throws ResourceException for various error conditions
      */
-    public Object getUnpooledConnection(PoolInfo poolInfo, ResourcePrincipal principal, boolean returnConnectionHandle)
+    public synchronized Object getUnpooledConnection(PoolInfo poolInfo, ResourcePrincipal principal, boolean returnConnectionHandle)
             throws ResourceException {
         ManagedConnectionFactory mcf = null;
         ResourcePool poolToDeploy = null;
@@ -541,7 +541,7 @@ public class ConnectorConnectionPoolAdminServiceImpl extends ConnectorService {
         try {
             //START CR 6597868
             if (!isPoolReferredByResource(poolInfo)) {
-                if (_registry.isMCFCreated(poolInfo)){
+                if (_registry.isMCFCreated(poolInfo)) {
                     unloadAndKillPool(poolInfo);
                 }
             }
@@ -650,7 +650,7 @@ public class ConnectorConnectionPoolAdminServiceImpl extends ConnectorService {
         Collection<ConnectorRuntimeExtension> extensions =
                 Globals.getDefaultHabitat().getAllServices(ConnectorRuntimeExtension.class);
         for(ConnectorRuntimeExtension extension : extensions) {
-            isJdbcPoolReferredInServerInstance = extension.isConnectionPoolReferredInServerInstance(poolInfo);
+            isJdbcPoolReferredInServerInstance |= extension.isConnectionPoolReferredInServerInstance(poolInfo);
         }
 
         return (resUtil.isPoolReferredInServerInstance(poolInfo) || isJdbcPoolReferredInServerInstance);
@@ -1245,7 +1245,7 @@ public class ConnectorConnectionPoolAdminServiceImpl extends ConnectorService {
      *
      * @param ccp - the ConnectorConnectionPool to publish
      */
-    public void recreateConnectorConnectionPool(ConnectorConnectionPool ccp)
+    public synchronized void recreateConnectorConnectionPool(ConnectorConnectionPool ccp)
             throws ConnectorRuntimeException {
         ConnectorRegistry registry = ConnectorRegistry.getInstance();
         if (registry == null) {
