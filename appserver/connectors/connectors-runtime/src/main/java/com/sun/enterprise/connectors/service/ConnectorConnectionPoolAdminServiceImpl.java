@@ -540,11 +540,13 @@ public class ConnectorConnectionPoolAdminServiceImpl extends ConnectorService {
 
         try {
             //START CR 6597868
+            /*
             if (!isPoolReferredByResource(poolInfo)) {
                 if (_registry.isMCFCreated(poolInfo)){
                     unloadAndKillPool(poolInfo);
                 }
             }
+            */
             //END CR 6597868
             mcf = obtainManagedConnectionFactory(poolInfo, new Hashtable());
         } catch (ConnectorRuntimeException re) {
